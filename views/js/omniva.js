@@ -723,24 +723,40 @@ var omnivaltDelivery = {
         return false;
     },
 }
-	
-//when document is loaded...
-$(document).ready(function(){
-    launch_omniva();
-});
 
-function launch_omniva(retry = 0) {
-    if (retry >= 50) return;
-
-    if ($('#omnivalt_parcel_terminal_carrier_details select').length){
-        $('#omnivalt_parcel_terminal_carrier_details select').omniva({showMap: show_omniva_map});
-        omnivaltDelivery.init();
-        $('.delivery-options .delivery-option input[type="radio"]').on('click',function(){
+if (typeof OnePageCheckoutPS !== typeof undefined) {
+    $(document).on('opc-load-carrier:completed', () => {
+        if ($('#omnivalt_parcel_terminal_carrier_details select').length){
+            $('#omnivalt_parcel_terminal_carrier_details select').omniva({showMap: show_omniva_map});
             omnivaltDelivery.init();
-        });
-    } else {
-        setTimeout(function() {
-            launch_omniva(retry + 1);
-        }, 200);
+        }
+    });
+} else if (typeof OPC !== typeof undefined && typeof prestashop !== typeof undefined) {
+    prestashop.on('opc-shipping-getCarrierList-complete', () => {
+        if ($('#omnivalt_parcel_terminal_carrier_details select').length){
+            $('#omnivalt_parcel_terminal_carrier_details select').omniva({showMap: show_omniva_map});
+            omnivaltDelivery.init();
+        }
+    });
+} else {
+    //when document is loaded...
+    $(document).ready(function(){
+        launch_omniva();
+    });
+
+    function launch_omniva(retry = 0) {
+        if (retry >= 50) return;
+
+        if ($('#omnivalt_parcel_terminal_carrier_details select').length){
+            $('#omnivalt_parcel_terminal_carrier_details select').omniva({showMap: show_omniva_map});
+            omnivaltDelivery.init();
+            $('.delivery-options .delivery-option input[type="radio"]').on('click',function(){
+                omnivaltDelivery.init();
+            });
+        } else {
+            setTimeout(function() {
+                launch_omniva(retry + 1);
+            }, 200);
+        }
     }
 }
