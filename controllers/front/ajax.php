@@ -1,24 +1,32 @@
 <?php
+
 class OmnivaltshippingAjaxModuleFrontController extends ModuleFrontController
 {
- 
-	public function initContent()
-	{
-		$this->ajax = true;
-		parent::initContent();
-	}
- 
-	public function displayAjax()
-	{
-    $context = Context::getContext();
-    if (isset($_POST['terminal']) && $_POST['terminal'] != '' && isset($context->cookie->id_cart))
+    public function init()
     {
-      $cart = new Cart((int)$context->cookie->id_cart);
-      $cart->setOmnivaltTerminal($_POST['terminal']);
-      die(Tools::jsonEncode('OK'));
+        parent::init();
+        if(Tools::getValue('action') == 'saveParcelTerminalDetails')
+        {
+            $result = true;
+            $id_cart = $this->context->cart->id;
+            OmnivaHelper::printToLog('Cart #' . $id_cart . '. Saving terminal...', 'cart');
+            $cartTerminal = new OmnivaCartTerminal($id_cart);
+            if(Validate::isLoadedObject($cartTerminal))
+            {
+                $cartTerminal->id_terminal = pSQL(Tools::getValue('terminal'));
+                $result &= $cartTerminal->update();
+                OmnivaHelper::printToLog('Cart #' . $id_cart . '. Terminal updated to ' . $cartTerminal->id_terminal, 'cart');
+            }
+            else
+            {
+                $cartTerminal->id = $id_cart;
+                $cartTerminal->force_id = true;
+                $cartTerminal->id_terminal = pSQL(Tools::getValue('terminal'));
+                $result &= $cartTerminal->add();
+                OmnivaHelper::printToLog('Cart #' . $id_cart . '. Terminal ' . $cartTerminal->id_terminal . ' added', 'cart');
+            }
+            $response = $result ? ['success' => 'Terminal saved'] : ['fail' => 'Failed to save terminal'];
+            die(json_encode($response));
+        }
     }
-    die(Tools::jsonEncode('not_changed'));
-    
-	}
- 
 }

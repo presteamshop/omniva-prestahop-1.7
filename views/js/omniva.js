@@ -1,6 +1,13 @@
 var omniva_addrese_change = false;
 (function ( $ ) {
+    var modal = document.getElementById('omnivaLtModal');
+    window.document.onclick = function(event) {
+        if (event.target == modal || event.target.id == 'omnivaLtModal' || event.target.id == 'terminalsModal') {
+            document.getElementById('omnivaLtModal').style.display = "none";
+        }
+    }
     $.fn.omniva = function(options) {
+        console.log('OMNIVA:', 'Loading map object...');
         var settings = $.extend({
             maxShow: 8,
             showMap: true,
@@ -11,14 +18,14 @@ var omniva_addrese_change = false;
         var autoSelectTerminal = false;
         var searchTimeout = null;
         var select = $(this);
-        var select_terminal = omnivadata.text_select_terminal;
-        var not_found = omnivadata.not_found;
+        var select_terminal = omnivalt_text.select_terminal;
+        var not_found = omnivalt_text.not_found;
         var terminalIcon = null;
         var homeIcon = null;
         var map = null;
         //var terminals = [];
-        //var terminals = JSON.parse(omnivaTerminals);
-        var terminals = omnivaTerminals;
+        //var terminals = JSON.parse(omnivalt_terminals);
+        var terminals = omnivalt_terminals;
         var selected = false;
         var previous_list = [];
 
@@ -31,89 +38,89 @@ var omniva_addrese_change = false;
         /*
         select.find('option').each(function(i,val){
            if (val.value != "")
-            terminals.push({'id':val.value,'text':val.text,'distance':false}); 
+            terminals.push({'id':val.value,'text':val.text,'distance':false});
            if (val.selected == true){
                selected = {'id':val.value,'text':val.text,'distance':false};
            }
-               
+
         });
         */
         var container = $(document.createElement('div'));
         container.addClass("omniva-terminals-list");
-        var dropdown = $('<div class = "dropdown">'+omnivadata.text_select_terminal+'</div>');
+        var dropdown = $('<div class = "dropdown">'+omnivalt_text.select_terminal+'</div>');
         updateSelection();
-        
-        var search = $('<input type = "text" placeholder = "'+omnivadata.text_enter_address+'" class = "search-input"/>');
+
+        var search = $('<input type = "text" placeholder = "'+omnivalt_text.enter_address+'" class = "search-input"/>');
         var loader = $('<div class = "loader"></div>').hide();
         var list = $(document.createElement('ul'));
-        var showMapBtn = $('<li><a href = "#" class = "show-in-map">'+omnivadata.text_show_in_map+'</a></li>');
-        var showMore = $('<div class = "show-more"><a href = "#">'+omnivadata.text_show_more+'</a></div>').hide();
+        var showMapBtn = $('<li><a href = "#" class = "show-in-map">'+omnivalt_text.show_in_map+'</a></li>');
+        var showMore = $('<div class = "show-more"><a href = "#">'+omnivalt_text.show_more+'</a></div>').hide();
         var innerContainer = $('<div class = "inner-container"></div>').hide();
-        
+
         $(container).insertAfter(select);
         $(innerContainer).append(search,loader,list,showMore);
         $(container).append(dropdown,innerContainer);
-        
+
         if (settings.showMap == true){
             initMap();
         }
-        
+
         refreshList(false);
-        
+
         list.on('click','a.show-in-map',function(e){
-            e.preventDefault();            
+            e.preventDefault();
             showModal();
         });
         $('body').on('click','#show-omniva-map',function(e){
-            e.preventDefault();            
+            e.preventDefault();
             showModal();
         });
-        
+
         showMore.on('click',function(e){
             e.preventDefault();
             showAll();
         });
-        
+
         dropdown.on('click',function(){
             toggleDropdown();
         });
-        
+
         select.on('change',function(){
             selected = {'id':$(this).val(),'text':$(this).find('option:selected').text(),'distance':false};
             updateSelection();
         });
-        
-    
+
+
         search.on('keyup',function(){
-            clearTimeout(searchTimeout);      
-            searchTimeout = setTimeout(function() { suggest(search.val())}, 400);    
-                  
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() { suggest(search.val())}, 400);
+
         });
         search.on('selectpostcode',function(){
-            findPosition(search.val(),true);    
-                  
+            findPosition(search.val(), omnivalt_autoselect);
+
         });
-        
+
         search.on('keypress',function(event){
             if (event.which == '13') {
               event.preventDefault();
             }
         });
-        
+
         $(document).on('mousedown',function(e){
             var container = $(".omniva-terminals-list");
-            if (!container.is(e.target) && container.has(e.target).length === 0 && container.hasClass('open')) 
+            if (!container.is(e.target) && container.has(e.target).length === 0 && container.hasClass('open'))
                 toggleDropdown();
-        });   
-        
+        });
+
         $('.omniva-back-to-list').off('click').on('click',function(){
             listTerminals(terminals,0,previous_list);
             $(this).hide();
         });
-       
+
         searchByAddress();
-        
-        
+
+
         function showModal(){
             getLocation();
             $('#omniva-search input').val(search.val());
@@ -147,16 +154,16 @@ var omniva_addrese_change = false;
             if (selected == false){
             var postcode = '';
             if (omniva_addrese_change == true){
-                if (omniva_postcode != ''){
-                    postcode = omniva_postcode;
+                if (omnivalt_postcode != ''){
+                    postcode = omnivalt_postcode;
                     search.val(postcode).trigger('selectpostcode');
                 }
                 //console.log('search '+postcode);
             } else {
                 omniva_addrese_change = true;
             }
-            if (omniva_postcode != ''){
-                    postcode = omniva_postcode;
+            if (omnivalt_postcode != ''){
+                    postcode = omnivalt_postcode;
                     search.val(postcode).trigger('selectpostcode');
                 }
             }
@@ -166,8 +173,8 @@ var omniva_addrese_change = false;
             list.find('li').show();
             showMore.hide();
         }
-        
-        function refreshList(autoselect){            
+
+        function refreshList(autoselect){
             $('.omniva-back-to-list').hide();
             var counter = 0;
             var city = false;
@@ -179,7 +186,7 @@ var omniva_addrese_change = false;
                 li.attr('data-id',val[3]);
                 li.html(val[0]);
                 if (val['distance'] !== undefined && val['distance'] != false){
-                    li.append(' <strong>' + val['distance'] + 'km</strong>');  
+                    li.append(' <strong>' + val['distance'] + 'km</strong>');
                     counter++;
                     if (settings.showMap == true && counter <= settings.maxShow){
                         //console.log('add-to-map');
@@ -234,7 +241,7 @@ var omniva_addrese_change = false;
             var topOffset = 0;
             /*
             if (selectedLi !== undefined){
-                topOffset = selectedLi.offset().top - list.offset().top + list.scrollTop();                
+                topOffset = selectedLi.offset().top - list.offset().top + list.scrollTop();
             }
             console.log(topOffset);
             */
@@ -242,19 +249,19 @@ var omniva_addrese_change = false;
             if (settings.showMap == true){
                 document.querySelector('.found_terminals').innerHTML = '<ul class="omniva-terminals-listing" start="1">'+html+'</ul>';
                 if (selected != false && selected.id != 0){
-                    map.eachLayer(function (layer) { 
+                    map.eachLayer(function (layer) {
                         if (layer.options.terminalId !== undefined && L.DomUtil.hasClass(layer._icon, "active")){
                             L.DomUtil.removeClass(layer._icon, "active");
                         }
                         if (layer.options.terminalId == selected.id) {
                             //layer.setLatLng([newLat,newLon])
                             L.DomUtil.addClass(layer._icon, "active");
-                        } 
+                        }
                     });
                 }
             }
         }
-        
+
         function selectOption(option){
             select.val(option.attr('data-id'));
             select.trigger('change');
@@ -262,37 +269,37 @@ var omniva_addrese_change = false;
             updateSelection();
             closeDropdown();
         }
-        
+
         function updateSelection(){
             if (selected != false){
-               dropdown.html(selected.text); 
+               dropdown.html(selected.text);
             }
         }
-        
+
         function toggleDropdown(){
             if (container.hasClass('open')){
                 innerContainer.hide();
-                container.removeClass('open') 
+                container.removeClass('open')
             } else {
                 innerContainer.show();
                 container.addClass('open');
             }
-        }  
-        
+        }
+
         function closeDropdown(){
             if (container.hasClass('open')){
                 innerContainer.hide();
-                container.removeClass('open') 
-            } 
+                container.removeClass('open')
+            }
         }
-        
+
         function resetList(){
-   
+
             $.each( terminals, function( key, location ) {
                 location['distance'] = false;
-                
+
             });
-    
+
             defaultSort();
         }
 
@@ -303,15 +310,15 @@ var omniva_addrese_change = false;
                 return itemOne.localeCompare(itemTwo);
             });
         }
-        
+
         function calculateDistance(y,x){
-   
+
             $.each( terminals, function( key, location ) {
                 distance = calcCrow(y, x, location[1], location[2]);
                 location['distance'] = distance.toFixed(2);
-                
+
             });
-    
+
             terminals.sort(function(a, b) {
                 var distOne = a['distance'];
                 var distTwo = b['distance'];
@@ -322,29 +329,29 @@ var omniva_addrese_change = false;
                     return 1;
                 }
                     return 0;
-            });   
+            });
         }
-        
-        function toRad(Value) 
+
+        function toRad(Value)
         {
            return Value * Math.PI / 180;
         }
-    
-        function calcCrow(lat1, lon1, lat2, lon2) 
+
+        function calcCrow(lat1, lon1, lat2, lon2)
         {
           var R = 6371;
           var dLat = toRad(lat2-lat1);
           var dLon = toRad(lon2-lon1);
           var lat1 = toRad(lat1);
           var lat2 = toRad(lat2);
-    
+
           var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
-          var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+            Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2);
+          var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
           var d = R * c;
           return d;
         }
-        
+
         function findPosition(address,autoselect){
             //console.log(address);
             if (address == "" || address.length < 3){
@@ -353,11 +360,13 @@ var omniva_addrese_change = false;
                 refreshList(autoselect);
                 return false;
             }
-            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?singleLine="+address+"&sourceCountry="+omniva_current_country+"&category=&outFields=Postal&maxLocations=1&forStorage=false&f=pjson", function( data ) {
+            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?singleLine="+address+"&sourceCountry="+omnivalt_current_country+"&category=&outFields=Postal&maxLocations=1&forStorage=false&f=pjson", function( data ) {
               if (data.candidates != undefined && data.candidates.length > 0){
                 calculateDistance(data.candidates[0].location.y,data.candidates[0].location.x);
                 refreshList(autoselect);
-                list.prepend(showMapBtn);
+                if(settings.showMap == true){
+                  list.prepend(showMapBtn);
+                }
                 //console.log('add');
                 showMore.show();
                 if (settings.showMap == true){
@@ -366,26 +375,24 @@ var omniva_addrese_change = false;
               }
             });
         }
-        
+
         function suggest(address){
-            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest?text="+address+"&f=pjson&sourceCountry=LT&maxSuggestions=1", function( data ) {
+            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest?text="+address+"&f=pjson&sourceCountry="+omnivalt_current_country+"&maxSuggestions=1", function( data ) {
               if (data.suggestions != undefined && data.suggestions.length > 0){
                 findPosition(data.suggestions[0].text,false);
               }
             });
         }
-        
+
         function initMap(){
            $('#omnivaMapContainer').html('<div id="omnivaMap"></div>');
-          if (omniva_current_country == "LT"){
-            map = L.map('omnivaMap').setView([54.999921, 23.96472], 8);
-          }
-          if (omniva_current_country == "LV"){
-            map = L.map('omnivaMap').setView([56.8796, 24.6032], 8);
-          }
-          if (omniva_current_country == "EE"){
-            map = L.map('omnivaMap').setView([58.7952, 25.5923], 7);
-          }
+           let _coordsArray = [];
+           omnivalt_terminals.forEach(item => {
+               _coordsArray.push([item[1], item[2]]);
+           });
+           let bounds = new L.LatLngBounds(_coordsArray);
+           map = L.map('omnivaMap').setView(bounds.getCenter(),7);
+
           L.tileLayer('https://maps.omnivasiunta.lt/tile/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.omniva.lt">Omniva</a>' +
                     ' | Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
@@ -401,33 +408,37 @@ var omniva_addrese_change = false;
                     popupAnchor:  [-3, -76]
                 }
             });
-          
+
           var Icon2 = L.Icon.extend({
                 options: {
                     iconSize:     [32, 32],
                     iconAnchor:   [16, 32]
                 }
             });
-            
-          
-            terminalIcon = new Icon({iconUrl: omnivadata.omniva_plugin_url+'sasi.png'});
-            homeIcon = new Icon2({iconUrl: omnivadata.omniva_plugin_url+'locator_img.png'});
-            
-          var locations = omnivaTerminals;
+
+          var terminalIconFile = "sasi.png";
+            if (omnivalt_current_country == "FI") {
+                terminalIconFile = "sasi_mh.svg";
+            }
+
+            terminalIcon = new Icon({iconUrl: omnivalt_params.url.images + terminalIconFile});
+            homeIcon = new Icon2({iconUrl: omnivalt_params.url.images + 'locator_img.png'});
+
+          var locations = omnivalt_terminals;
             jQuery.each( locations, function( key, location ) {
               L.marker([location[1], location[2]], {icon: terminalIcon, terminalId:location[3] }).on('click',function(e){ listTerminals(locations,0,this.options.terminalId);terminalDetails(this.options.terminalId);}).addTo(map);
             });
-          
+
           //show button
-          $('#show-omniva-map').show(); 
-          
+          $('#show-omniva-map').show();
+
           $('#terminalsModal').on('click',function(){$('#omnivaLtModal').hide();});
           $('#omniva-search form input').off('keyup focus').on('keyup focus',function(){
-                clearTimeout(timeoutID);      
-                timeoutID = setTimeout(function(){ autoComplete($('#omniva-search form input').val())}, 500);    
-                      
+                clearTimeout(timeoutID);
+                timeoutID = setTimeout(function(){ autoComplete($('#omniva-search form input').val())}, 500);
+
             });
-            
+
             $('.omniva-autocomplete ul').off('click').on('click','li',function(){
                 $('#omniva-search form input').val($(this).text());
                 /*
@@ -442,10 +453,10 @@ var omniva_addrese_change = false;
             });
             $(document).click(function(e){
                 var container = $(".omniva-autocomplete");
-                if (!container.is(e.target) && container.has(e.target).length === 0) 
+                if (!container.is(e.target) && container.has(e.target).length === 0)
                     container.hide();
             });
-          
+
             $('#terminalsModal').on('click',function(){
                 $('#omnivaLtModal').hide();
             });
@@ -461,15 +472,15 @@ var omniva_addrese_change = false;
                 terminalSelected($(this).attr('data-id'));
             });
         }
-        
+
         function autoComplete(address){
             var founded = [];
             $('.omniva-autocomplete ul').html('');
             $('.omniva-autocomplete').hide();
             if (address == "" || address.length < 3) return false;
             $('#omniva-search form input').val(address);
-            //$.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?singleLine="+address+"&sourceCountry="+omniva_current_country+"&category=&outFields=Postal,StAddr&maxLocations=5&forStorage=false&f=pjson", function( data ) {
-            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest?text="+address+"&sourceCountry="+omniva_current_country+"&f=pjson&maxSuggestions=4", function( data ) {
+            //$.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?singleLine="+address+"&sourceCountry="+omnivalt_current_country+"&category=&outFields=Postal,StAddr&maxLocations=5&forStorage=false&f=pjson", function( data ) {
+            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest?text="+address+"&sourceCountry="+omnivalt_current_country+"&f=pjson&maxSuggestions=4", function( data ) {
               if (data.suggestions != undefined && data.suggestions.length > 0){
                   $.each(data.suggestions ,function(i,item){
                     //console.log(item);
@@ -489,7 +500,7 @@ var omniva_addrese_change = false;
               $('.omniva-autocomplete').show();
             });
         }
-        
+
         function terminalDetails(id) {
             /*
             terminals = document.querySelectorAll(".omniva-details")
@@ -502,9 +513,9 @@ var omniva_addrese_change = false;
             dispOmniva = document.getElementById(id)
             if(dispOmniva){
                 dispOmniva.style.display = 'block';
-            }      
+            }
         }
-        
+
         function getLocation() {
           if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(loc) {
@@ -512,9 +523,9 @@ var omniva_addrese_change = false;
                     setCurrentLocation([loc.coords.latitude, loc.coords.longitude]);
                 }
             });
-          } 
+          }
         }
-        
+
         function setCurrentLocation(pos){
             if (currentLocationIcon){
               map.removeLayer(currentLocationIcon);
@@ -541,7 +552,7 @@ var omniva_addrese_change = false;
                 $('.omniva-back-to-list').show();
              }
              if ($.isArray(id)){
-                previous_list = []; 
+                previous_list = [];
              }
             $('.found_terminals').html('');
             //console.log(id);
@@ -574,38 +585,38 @@ var omniva_addrese_change = false;
                                           <button type="button" class="btn-marker" style="font-size:14px; padding:0px 5px;margin-bottom:10px; margin-top:5px;height:25px;" data-id="'+location[3]+'">'+select_terminal+'</button>\
                                           </div>\
                                           </div></li>';
-                                              
-                              counter++;           
-                               
+
+                              counter++;
+
             });
             document.querySelector('.found_terminals').innerHTML = '<ul class="omniva-terminals-listing" start="1">'+html+'</ul>';
             if (id != 0){
-                map.eachLayer(function (layer) { 
+                map.eachLayer(function (layer) {
                     if (layer.options.terminalId !== undefined && L.DomUtil.hasClass(layer._icon, "active")){
                         L.DomUtil.removeClass(layer._icon, "active");
                     }
                     if (layer.options.terminalId == id) {
                         //layer.setLatLng([newLat,newLon])
                         L.DomUtil.addClass(layer._icon, "active");
-                    } 
+                    }
                 });
             }
         }
-        
+
         function zoomTo(pos, id){
             terminalDetails(id);
             map.setView(pos,14);
-            map.eachLayer(function (layer) { 
+            map.eachLayer(function (layer) {
                 if (layer.options.terminalId !== undefined && L.DomUtil.hasClass(layer._icon, "active")){
                     L.DomUtil.removeClass(layer._icon, "active");
                 }
                 if (layer.options.terminalId == id) {
                     //layer.setLatLng([newLat,newLon])
                     L.DomUtil.addClass(layer._icon, "active");
-                } 
+                }
             });
         }
-        
+
         function terminalSelected(terminal,close) {
           if (close === undefined){
               close = true;
@@ -619,86 +630,121 @@ var omniva_addrese_change = false;
                   node.selected = false;
                 }
               }
-                    
+
               $('select[name="omnivalt_parcel_terminal"]').val(terminal);
               $('select[name="omnivalt_parcel_terminal"]').trigger("change");
               if (close){
                 $('#omnivaLtModal').hide();
             }
         }
-        
+
         return this;
     };
- 
+
 }( $ ));
 
 var omnivaltDelivery = {
     init : function() {
+        console.groupCollapsed('OMNIVA: Initializing Omniva terminal carrier');
         var self = this;
-        $('.delivery-options .delivery-option input[type="radio"]').each(function() {
+        $('.delivery-options .delivery-option input[type="radio"], input.delivery_option_radio').each(function() {
             var $this = $(this),
                 value = $this.val(),
-                carrierIds = value.split(',');
-            
-            if (value != omnivalt_parcel_terminal_carrier_id + ',') {
+                carrierIds = value.split(','),
+                moveTo;
+            if (value != omnivalt_params.methods.omniva_terminal + ',') {
                 return;
             }
-            
-            var $omnivaltItem = $this.closest('.delivery-option');
-            var omnivaltLocation = $omnivaltItem.find('label');
-            
-            //$(".delivery_option #omnivalt_parcel_terminal_carrier_details").remove();
-            $("#hook-display-before-carrier #omnivalt_parcel_terminal_carrier_details").appendTo(omnivaltLocation);
-            //$("#HOOK_BEFORECARRIER #omnivalt_parcel_terminal_carrier_details").remove();
+            if($this[0].classList.contains('delivery_option_radio'))
+            {
+                console.log('Block add method: Radio');
+                if (!omnivalt_params.prestashop.is_16 && typeof OPC !== typeof undefined) { /* onepagecheckoutps v5 - 4.2.3 - presteamshop */
+                    moveTo = $this.closest('.delivery-option').find('.delivery_option_logo').next();
+                } else {
+                    moveTo = $this.closest('.delivery_option').find('.delivery_option_logo').next();
+                }
+                $("#hook-display-before-carrier #omnivalt_parcel_terminal_carrier_details").appendTo('#omnivalt_parcel_terminal_carrier_details');
+                $('#omnivalt_parcel_terminal_carrier_details').appendTo(moveTo);
+            }
+            else
+            {
+                console.log('Block add method: Label');
+                var omnivaltLocation = $this.closest('.delivery-option').next();
+                moveTo = $this.closest('.delivery-option').find('label');
+                $("#hook-display-before-carrier #omnivalt_parcel_terminal_carrier_details").appendTo(omnivaltLocation);
+                omnivaltLocation.find('#omnivalt_parcel_terminal_carrier_details').appendTo(moveTo);
+            }
+            console.log('Omniva block added to carrier');
         });
 
-        if ($('.delivery-options .delivery-option input[type="radio"]:checked').val() == omnivalt_parcel_terminal_carrier_id + ',') {
+        let carrier_input = (omnivalt_params.prestashop.is_17) ? '.delivery-options .delivery-option input[type="radio"]:checked' : '.delivery_options .delivery_option input[type="radio"]:checked';
+        if ($(carrier_input).val() == omnivalt_params.methods.omniva_terminal + ',') {
             $("#omnivalt_parcel_terminal_carrier_details").show();
+            console.log('Omniva block shown');
         } else {
             $("#omnivalt_parcel_terminal_carrier_details").hide();
+            console.log('Hidden Omniva block');
         }
-        
+
+        console.log('Updating events...');
         $('form#js-delivery').off('submit').on('submit', function(){
             return self.validate();
         });
         $('select[name="omnivalt_parcel_terminal"]').off('change.Omniva').on('change.Omniva', function(e) {
+            console.groupCollapsed('OMNIVA: Saving selected terminal');
             var terminal = $(this).val();
-            $.ajax({
-                type: 'POST',
-                headers: { "cache-control": "no-cache" },
-                url: omnivaltdelivery_controller,
-                async: true,
-                cache: false,
-                dataType: 'json',
-                data: 'action=saveParcelTerminalDetails'
-                    + '&terminal=' + terminal,
-                success: function(jsonData)
-                {
-                    //console.log(jsonData);
-                },
-                error: function(XMLHttpRequest, textStatus, errorThrown) {
-                    if (textStatus !== 'abort'){
-                        if (!!$.prototype.fancybox)
-                        $.fancybox.open([
-                            {
-                                type: 'inline',
-                                autoScale: true,
-                                minHeight: 30,
-                                content: '<p class="fancybox-error">' + omnivalt_parcel_terminal_error + '</p>'
-                            }],
-                            {
-                                padding: 0
+            if(terminal)
+            {
+                $.ajax({
+                    type: 'POST',
+                    headers: { "cache-control": "no-cache" },
+                    url: omnivalt_params.url.controller_ajax,
+                    async: true,
+                    cache: false,
+                    dataType: 'json',
+                    data: 'action=saveParcelTerminalDetails'
+                        + '&terminal=' + terminal,
+                    success: function(jsonData)
+                    {
+                        //console.log(jsonData);
+                        console.log('Terminal saved successfully');
+
+                        /* onepagecheckoutps - v4.2.3 - presteamshop */
+                        if (!omnivalt_params.prestashop.is_16 && typeof OPC !== typeof undefined) {
+                            if ($('#btn-placer_order').is(':disabled')) {
+                                prestashop.emit('opc-payment-getPaymentList');
                             }
-                        );
-                        else
-                            alert(omnivalt_parcel_terminal_error);
+                        }
+                    },
+                    error: function(XMLHttpRequest, textStatus, errorThrown) {
+                        console.log('Failed terminal save');
+                        if (textStatus !== 'abort'){
+                            if (!!$.prototype.fancybox)
+                                $.fancybox.open([
+                                        {
+                                            type: 'inline',
+                                            autoScale: true,
+                                            minHeight: 30,
+                                            content: '<p class="fancybox-error">' + omnivalt_text.select_terminal_error + '</p>'
+                                        }],
+                                    {
+                                        padding: 0
+                                    }
+                                );
+                            else
+                                alert(omnivalt_text.select_terminal_error);
+                        }
                     }
-                }
-            });
+                });
+            }
+            console.groupEnd();
         });
+        console.groupEnd();
     },
     validate : function() {
-        if ($('.delivery-options .delivery-option input[type="radio"]:checked').val() == omnivalt_parcel_terminal_carrier_id + ',' && $('select[name="omnivalt_parcel_terminal"]').val() == "")
+        console.groupCollapsed('OMNIVA: Validating selected terminal');
+        let carrier_input = (omnivalt_params.prestashop.is_17) ? '.delivery-options .delivery-option input[type="radio"]:checked' : '.delivery_options .delivery_option input[type="radio"]:checked';
+        if ($(carrier_input).val() == omnivalt_params.methods.omniva_terminal + ',' && $('select[name="omnivalt_parcel_terminal"]').val() == "")
         {
             if (!!$.prototype.fancybox) {
                 $.fancybox.open([
@@ -706,57 +752,83 @@ var omnivaltDelivery = {
                     type: 'inline',
                     autoScale: true,
                     minHeight: 30,
-                    content: '<p class="fancybox-error">' + omnivalt_parcel_terminal_error + '</p>'
+                    content: '<p class="fancybox-error">' + omnivalt_text.select_terminal_error + '</p>'
                 }],
                 {
                     padding: 0
                 });
             }
             else {
-                alert(omnivalt_parcel_terminal_error);
+                alert(omnivalt_text.select_terminal_error);
             }
         }
         else {
+            console.log('Confirmed successfully');
             //paymentModuleConfirm(); //if opc
+            console.groupEnd();
             return true;
         }
+        console.log('Validation failed');
+        console.groupEnd();
         return false;
     },
+    change_modal_theme : function() {
+        this.remove_all_classes_with_prefix($('#omnivaLtModal')[0], 'theme-');
+        if (omnivalt_current_country == 'FI') {
+            $('#omnivaltModalTitle').text(omnivalt_text.variables.matkahuolto.modal_title);
+            $('#omnivaLtModal').addClass('theme-matkahuolto');
+        } else {
+            $('#omnivaltModalTitle').text(omnivalt_text.variables.omniva.modal_title);
+            $('#omnivaLtModal').addClass('theme-omniva');
+        }
+    },
+    remove_all_classes_with_prefix : function(element, prefix) {
+        var classes = element.className.split(" ").filter(function(c) {
+            return c.lastIndexOf(prefix, 0) !== 0;
+        });
+        element.className = classes.join(" ").trim();
+    }
 }
 
-if (typeof OnePageCheckoutPS !== typeof undefined) {
-    $(document).on('opc-load-carrier:completed', () => {
-        if ($('#omnivalt_parcel_terminal_carrier_details select').length){
-            $('#omnivalt_parcel_terminal_carrier_details select').omniva({showMap: show_omniva_map});
-            omnivaltDelivery.init();
-        }
-    });
-} else if (typeof OPC !== typeof undefined && typeof prestashop !== typeof undefined) {
+//when document is loaded...
+if (!omnivalt_params.prestashop.is_16 && typeof OPC !== typeof undefined) { /* onepagecheckoutps v5 - 4.2.3 - presteamshop */
     prestashop.on('opc-shipping-getCarrierList-complete', () => {
-        if ($('#omnivalt_parcel_terminal_carrier_details select').length){
+        launch_omniva();
+    });
+} else if (typeof OnePageCheckoutPS !== typeof undefined) {
+    $(document).on('opc-load-carrier:completed', () => {
+        launch_omniva();
+        console.log('OMNIVA: OPC loaded....................................');
+        /*if ($('#omnivalt_parcel_terminal_carrier_details select').length){
             $('#omnivalt_parcel_terminal_carrier_details select').omniva({showMap: show_omniva_map});
             omnivaltDelivery.init();
-        }
+        }*/
     });
 } else {
-    //when document is loaded...
     $(document).ready(function(){
         launch_omniva();
     });
+}
 
-    function launch_omniva(retry = 0) {
-        if (retry >= 50) return;
+function launch_omniva(retry = 0) {
+    console.log('OMNIVA:', 'Loading map... Retry ' + retry);
+    if (retry >= 50) return;
 
-        if ($('#omnivalt_parcel_terminal_carrier_details select').length){
-            $('#omnivalt_parcel_terminal_carrier_details select').omniva({showMap: show_omniva_map});
+    if ($('#omnivalt_parcel_terminal_carrier_details .omniva-terminals-list').length) {
+        console.log('OMNIVA:', 'Map already loaded. Skipping.');
+        return;
+    }
+
+    if ($('#omnivalt_parcel_terminal_carrier_details select').length){
+        $('#omnivalt_parcel_terminal_carrier_details select').omniva({showMap: omnivalt_show_map});
+        omnivaltDelivery.init();
+        $('.delivery-options .delivery-option input[type="radio"], input.delivery_option_radio').on('click',function(){
             omnivaltDelivery.init();
-            $('.delivery-options .delivery-option input[type="radio"]').on('click',function(){
-                omnivaltDelivery.init();
-            });
-        } else {
-            setTimeout(function() {
-                launch_omniva(retry + 1);
-            }, 200);
-        }
+        });
+        omnivaltDelivery.change_modal_theme();
+    } else {
+        setTimeout(function() {
+            launch_omniva(retry + 1);
+        }, 200);
     }
 }

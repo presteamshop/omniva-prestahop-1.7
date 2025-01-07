@@ -1,0 +1,9 @@
+{
+    "require": {
+        "mijora/omniva-api": "^1.2.0"
+    },
+    "config": {
+        "prepend-autoloader": false
+    },
+    "type": "prestashop-module"
+}

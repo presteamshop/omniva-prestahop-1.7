@@ -1,11 +1,200 @@
-= 1.1.9 =
+= 2.2.1 =
+# Fixed
+- Fixed "Omniva orders" page error, when international carriers had never been created before
+- Removed the use of the str_contains function, since this function only appeared in PHP 8.0
+
+# Updated
+- API library to 1.3.1
+
+= 2.2.0 =
+# Fixed
+- Fixed adding a new DB column in the Upgrade function of the version 2.1.0
+
+# Improved
+- Created the possibility to add/remove the desired delivery methods in the module settings
+- Created the ability to choose what actions will be performed during the module uninstall
+- Created an opportunity to register shipments to European countries
+
+= 2.1.1 =
+# Fixed
+- Fixed return code sending parameter for OMX
+
+# Improved
+- Added recognition of COD module "Cash on delivery with order summary" (codpro).
+- Added sending of shipments data to the Omniva PowerBi system
+
+# Updated
+- API library to 1.2.0
+
+= 2.1.0 =
+# Improved
+- Added compatibility with One Page Checkout PS (onepagecheckoutps) module
+- The module is adapted to work with Omniva OMX
+
+# Changed
+- Changed the type of the "Company country code" field to Select in the module settings to avoid an errors when entered an invalid value
+
+# Updated
+- API library to 1.1.0
+
+= 2.0.21 =
+# Improved
+- Added that Omniva delivery methods would not be displayed if the dimensions of the cart exceed the maximum dimensions specified in the carrier's settings
+- Added functions which allows to convert weight and dimension units to specified ones
+
+= 2.0.20 =
+# Fixed
+- Removed unused hook from list of registered hooks
+
+# Improved
+- Added a possibility to log actions
+- Added the option to disable automatic terminal selection
+
+= 2.0.19 =
+# Changed
+- Allow FI terminals for LV senders
+
+= 2.0.18 =
+# Fixed
+- Fixed bug when trying generate label from order edit page on PS 1.7.0-1.7.6
+
+# Changed
+- Changed so that the Finland parcel terminal selection map uses the Matkahuolto name, logos and colors
+
+# Improved
+- Added missed translations to Lithuanian
+
+= 2.0.17 =
+# Improved
+- Added an error message when trying to register a shipment with the COD service for sending to a Finland Matkahuolto parcel terminal
+
+= 2.0.16 =
+# Added
+- Module configuration page accessible in product page, where user can select, which product must be treated as 18+
+
+# Improved
+- Label generation now checks if order products has 18+ mark. If yes adds additional service 'PC'.
+
+= 2.0.15 =
+# Fixed
+- Fixed display of new orders on the Omniva orders page
+- Fixed terminals list show on Prestashop 1.6
+
+# Updated
+- API library to 1.0.15
+
+= 2.0.14 =
+# Updated
+- Added Finland terminal selection for Estonian customers (Finland carrier option must be enabled)
+- API library to 1.0.14
+- Changed bulk action dropdown detection for PS 1.7.7+ versions
+
+= 2.0.13 =
+# Updated
+- API library to 1.0.13
+
+# Fixed
+- Fixed error when Order history element is empty
+- hookHeader fron js and css file embed forprestashop 1.6 when prestashop is in subfolder
+
+= 2.0.12 =
+# Fixed
+- Fixed that courier call time will get from settings
+
+= 2.0.11 =
+# Changed
+- Changed error field type to let storage of larger error messages
+- Changed cod_amount field type to Decimal 8,2 - this allows a maximum COD amount of 999999.99
+- When registering with set multiple packages, weight is distributed by number of packages (eg. 2 pck 30kg -> 15kg each)
+
+# Improved
+- It has been made that in the Omniva order list, the "New" tab does not show orders by status that are not relevant for shipping.
+
+= 2.0.9 =
+# Changed
+- Changed how order history is added. Instead of using add() it will be added using addWithEmail().
+    This allows Prestashop to send email if user has set email template on Omniva custom order statuses.
+
+= 2.0.8 =
+# Fixed
+- Fixed order id list typo given for bulk label download.
+
+= 2.0.7 =
+# Added
+- Option to add order id or reference to label. Option is in module settings
+
+# Fixed
+- Fixed an issue where during bulk label registration first succesfull registration terminated registering of other labels
+
+= 2.0.6 =
+# Changed
+- Allow to install module on newest Prestashop version
+
+= 2.0.5 =
+# Fixed
+- changed so that the recipient name is taken from the shipping information
+- fixed Omniva info saving if Order history data not exists
+- fixed Omniva terminal saving if Order dont have selected terminal
+
+# Improved
+- changed the name of the generate manifest button and added a description
+- added missing LT translations
+- added error message when shipment sending method not available
+
+= 2.0.4 =
+# Fixed
+- fixed address geocode hardcode
+- fixed a map button show by settings value
+- fixed a carrier selection in Omniva block on Order edit page, when carrier is disabled
+- fixed the error on Checkout page that occurs when the country code is lowercase
+- fixed Omniva block showing in old Orders, after Omniva carrier edit
+
+# Improved
+- unified structure of JS variables in the parcel terminal carrier template
+
+# Updated
+- API library to 1.0.10
+
+= 2.0.3 =
+# Fixed
+- fixed label generation ajax error in order edit page
+- in Omniva Orders page order link moved from customer to id
+- in Omniva Orders page renamed manifest generation button, moved to right side and added additional button above table
+- in Omniva Orders page fixed JS file link, when website is in subfolder
+- in Omniva Orders page changed Orders list order by ID only
+
+# Improved
+- added error message in order edit page, when label generation ajax got error
+- added a option to disable return code sending to customer
+
+# Updated
+- API library to 1.0.7
+
+= 2.0.2 =
+# Fixed
+- fixed reference number generation, when order ID is less then 10
+
+# Updated
+- API library to 1.0.6
+
+= 2.0.1 =
+# Updated
+- API library to 1.0.5
+- Added new logo
+
+# Improved
+- Added save of initial order data
+
+= 2.0.0 =
+ - Reworked module to use API library for better maintenance.
+ - Removed Cart override and cart table alterations.
+ - Remade ajax controller to admin type.
+ - Various code clean-ups and optimizations.
+ - Compatibility along 1.6 - 1.7 versions.
 
 # Fixed
 - Default language code select in Checkout page
 - Terminal selection load in OnePage checout page
-
-# Improved
-- Added support for new Omniva XML response namespace
 
 = 1.1.8 =
 
